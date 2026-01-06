@@ -1,9 +1,7 @@
 <div align="center">
-<br>
-<br>
-
-<img src="assets/images/logo.svg" height="196">
 <br><br>
+
+<img src="assets/images/logo.svg">
 
 # Seedpack - Declarative modpacks
 <br>
