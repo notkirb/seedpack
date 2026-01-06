@@ -61,9 +61,9 @@ The following is an example for an index.json:
     "loader": "fabric",
     "target_game_version": "1.21.11",
     "mods": [
-        "EsAfCjCV",
-        "lhGA9TYQ",
-        "g96Z4WVZ"
+        "P7dR8mSH",
+        "AANobbMI",
+        "YL57xq9U"
     ],
     "template_format": [
         "modrinth",
@@ -81,12 +81,12 @@ If you want to start with an existing modpack, you will need Prism Launcher to e
 ```json
 [
     {
-        "name": "AppleSkin",
-        "url": "https://modrinth.com/mod/EsAfCjCV"
+        "name": "Fabric API",
+        "url": "https://modrinth.com/mod/P7dR8mSH"
     },
     {
-        "name": "Architectury",
-        "url": "https://modrinth.com/mod/lhGA9TYQ"
+        "name": "Sodium",
+        "url": "https://modrinth.com/mod/AANobbMI"
     }
 ]
 ```
