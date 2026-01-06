@@ -135,8 +135,8 @@ if args.seed:
     if os.path.exists(os.path.join(args.seed, "overrides")):
         shutil.copytree(os.path.join(args.seed, "overrides"), os.path.join(os.getcwd(), ".tmp", "overrides"))
 
-    shutil.make_archive(f"{seed["pack_name"]}_{seed["pack_version"]}.mrpack", "zip", os.path.join(os.getcwd(), ".tmp"))
-    shutil.move(os.path.join(os.getcwd(), f"{seed["pack_name"]}_{seed["pack_version"]}.mrpack.zip"), os.path.join(os.getcwd(), f"{seed["pack_name"]}_{seed["pack_version"]}.mrpack"))
+    shutil.make_archive("tmp.mrpack", "zip", os.path.join(os.getcwd(), ".tmp"))
+    shutil.move(os.path.join(os.getcwd(), "tmp.mrpack.zip"), os.path.join(os.getcwd(), f"{seed["pack_name"]}_{seed["pack_version"]}_{seed["target_game_version"]}.mrpack"))
 
     shutil.rmtree(os.path.join(os.getcwd(), ".tmp"))
 

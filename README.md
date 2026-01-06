@@ -1,5 +1,20 @@
-# Seedpack 🌱: Declarative modpacks
+<div align="center">
+<br>
+<br>
+
+<img src="assets/images/logo.svg" height="196">
+<br><br>
+
+# Seedpack - Declarative modpacks
+<br>
+</div>
+
+![Static Badge](https://img.shields.io/badge/Built%20with%20-%20Seedpack%20-%20green?style=for-the-badge)
+
+
 Seedpack is a modpack management utility for modpack developers to quickly update and distribute modpacks. It uses templates called *seeds* to find compatible mods and generate a modpack. All a developer has to do is define the game version, then generate a modpack.
+<br><br>
+
 
 ## Terminology
 
