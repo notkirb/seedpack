@@ -4,80 +4,95 @@ import requests
 import argparse
 import shutil
 import os
+from rich.progress import Progress
+from rich.console import Console
 
 def get_latest_fabric_loader(version : str):
     response = requests.get(f"https://meta.fabricmc.net/v2/versions/loader/{version}")
     return json.loads(response.content)[0]["loader"]
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--template", help="Path of template folder")
-parser.add_argument("-c", "--create-template", help="Path of modlist.json")
+parser.add_argument("-t", "--seed", help="Path of seed folder")
+parser.add_argument("-c", "--create-seed", help="Path of modlist.json")
+
+parser.add_argument("-g", "--game-version", help="Override game version")
 parser.add_argument("-v", "--verbose", help="Increate print verbosity", action="store_true")
-parser.add_argument("-y", "--noconfirm", help="Default 'yes' to download and package modpack", action="store_true")
-parser.add_argument("-f", "--force", help="Force incompatible mods to be installed", action="store_true")
+parser.add_argument("-y", "--noconfirm", help="When -t used: Default 'yes' to download and package modpack | When -c used: Skip inputs and use defaults (DANGEROUS)", action="store_true")
+parser.add_argument("-f", "--force", help="Force incompatible mods to be added (DANGEROUS)", action="store_true")
 args = parser.parse_args()
 
-if args.template:
-    template_file = open(os.path.join(args.template, "index.json"), "r") 
-    template = json.load(template_file)
+console = Console(highlight=False)
+print = console.print
+input = console.input
 
-    print(f"\nUsing template {template["pack_name"]}@{template["pack_version"]}")
+if args.seed:
+    seed_file = open(os.path.join(args.seed, "index.json"), "r") 
+    seed = json.load(seed_file)
 
-    match template["loader"]:
+    if args.game_version:
+        game_version = args.game_version
+    else:
+        game_version = seed["target_game_version"]
+
+    print(f"\nUsing seed [cyan]{seed["pack_name"]} {seed["pack_version"]}[/] with game version [cyan]{game_version}[/]")
+
+    match seed["loader"]:
         case "fabric":
             loader_index_name = "fabric-loader"
-            loader = get_latest_fabric_loader(template["target_game_version"])
+            loader = get_latest_fabric_loader(game_version)
             if args.verbose:
                 print(f"Fabric loader version: {loader["version"]}")
 
     files = []
     incompatible = []
 
-    print(f"\n\033[96mChecking mods...\033[0m this will take a while.")
+    print(f"\n[cyan]Checking mods...[/] this will take a while.")
 
-    response = requests.get(f"https://api.modrinth.com/v2/projects", params={"ids": json.dumps(template["mods"])})
+    response = requests.get(f"https://api.modrinth.com/v2/projects", params={"ids": json.dumps(seed["mods"])})
     if response.ok:
         mods = json.loads(response.content)
         if args.verbose:
-            print(f"\033[96mFound mods\033[0m: ")
+            print(f"[cyan]Found mods[/]: ")
             for mod in mods:
-                print(f"   - {mod["title"]} \033[90m({mod["id"]})\033[0m")
-        for mod in mods:
-            response = requests.get(f"https://api.modrinth.com/v2/project/{mod["id"]}/version", params={"game_versions": json.dumps([template["target_game_version"]]), "loaders": json.dumps([template["loader"]])})
-            if response.ok:
-                try:
-                    version = json.loads(response.content)[0]
-                    if args.verbose:
-                        print(f"\033[92mFound version\033[0m: '{version["version_number"]}' with target '{version["game_versions"][-1]}'")
-
-                    files.append(version)
-                except IndexError:
-                    if args.verbose:
-                        print(f"\033[31mNo compatible version found\033[0m: '{mod["title"]}'")
-                    incompatible.append(mod)
-            else:
-                print(f"\033[31mError when getting version for mod\033[0m '{mod["id"]}' with target '{template["target_game_version"]}': '{response.status_code}' | '{response.content}'")
+                print(f"   - {mod["title"]} [bright_black]({mod["id"]})[/]")
+        with Progress() as progressbar:
+            task = progressbar.add_task("Checking mods", total=len(mods))
+            for mod in mods:
+                response = requests.get(f"https://api.modrinth.com/v2/project/{mod["id"]}/version", params={"game_versions": json.dumps([game_version]), "loaders": json.dumps([seed["loader"]])})
+                if response.ok:
+                    try:
+                        version = json.loads(response.content)[0]
+                        if args.verbose:
+                            print(f"\n[green]Found version[/]: '{version["version_number"]}' with target '{version["game_versions"][-1]}'")
+                        files.append(version)
+                    except IndexError:
+                        if args.verbose:
+                            print(f"\n[red]No compatible version found[/]: '{mod["title"]}'")
+                        incompatible.append(mod)
+                else:
+                    print(f"[bold red]Error when getting version for mod[/] '{mod["id"]}' with target '{game_version}': '{response.status_code}' | '{response.content}'")
+                progressbar.update(task, advance=1)
 
     else:
-        print(f"\033[31mError when getting mods\033[0m: '{response.status_code}' | '{response.content}'")
+        print(f"[bold red]Error when getting mods[/]: '{response.status_code}' | '{response.content}'")
 
     if len(incompatible) > 0:
-        print(f"\n{len(incompatible)} \033[31mmods are incompatible with\033[0m {template["target_game_version"]}:")
+        print(f"\n{len(incompatible)} [red]mods are incompatible with[/] {game_version}:")
         for mod in incompatible:
-            print(f"   - {mod["title"]} \033[90m({mod["id"]})\033[0m")
+            print(f"   - {mod["title"]} [bright_black]({mod["id"]})[/]")
 
     print("\nThe following mods will be added:")
     for mod in files:
-        print(f"\033[90m{mod["files"][0]["filename"]}\033[0m", end=", ")
-    if os.path.exists(os.path.join(args.template, "overrides")):
+        print(f"[bright_black]{mod["files"][0]["filename"]}[/]", end=", ")
+    if os.path.exists(os.path.join(args.seed, "overrides")):
         print("\nThe following overrides will be added:")
-        for file in os.listdir(os.path.join(args.template, "overrides")):
-            print(f"\033[90m{file}\033[0m", end=", ")
+        for file in os.listdir(os.path.join(args.seed, "overrides")):
+            print(f"[bright_black]{file}[/]", end=", ")
     print()
 
     if args.noconfirm == False:
         while True:
-            user_choice = input("\n\033[93mDo you want to continue?\033[0m (Y/n): ")
+            user_choice = input("\n[bright_yellow]Do you want to continue?[/] (Y/n): ")
             match user_choice.lower():
                 case 'y':
                     break
@@ -105,42 +120,42 @@ if args.template:
     modrinth_index = {
         "dependencies": {
             loader_index_name: loader["version"],
-            template["game"]: template["target_game_version"]
+            seed["game"]: game_version
         },
         "files": files_formatted,
         "formatVersion": 1,
-        "game": template["game"],
-        "name": template["pack_name"],
-        "versionId": template["pack_version"]
+        "game": seed["game"],
+        "name": seed["pack_name"],
+        "versionId": seed["pack_version"]
     }
 
     os.mkdir(os.path.join(os.getcwd(), ".tmp"))
     modrinth_index_file = open(os.path.join(os.getcwd(), ".tmp", "modrinth.index.json"), "w")
     modrinth_index_file.write(json.dumps(modrinth_index))
-    if os.path.exists(os.path.join(args.template, "overrides")):
-        shutil.copytree(os.path.join(args.template, "overrides"), os.path.join(os.getcwd(), ".tmp", "overrides"))
+    if os.path.exists(os.path.join(args.seed, "overrides")):
+        shutil.copytree(os.path.join(args.seed, "overrides"), os.path.join(os.getcwd(), ".tmp", "overrides"))
 
-    shutil.make_archive(f"{template["pack_name"]}_{template["pack_version"]}.mrpack", "zip", os.path.join(os.getcwd(), ".tmp"))
-    shutil.move(os.path.join(os.getcwd(), f"{template["pack_name"]}_{template["pack_version"]}.mrpack.zip"), os.path.join(os.getcwd(), f"{template["pack_name"]}_{template["pack_version"]}.mrpack"))
+    shutil.make_archive(f"{seed["pack_name"]}_{seed["pack_version"]}.mrpack", "zip", os.path.join(os.getcwd(), ".tmp"))
+    shutil.move(os.path.join(os.getcwd(), f"{seed["pack_name"]}_{seed["pack_version"]}.mrpack.zip"), os.path.join(os.getcwd(), f"{seed["pack_name"]}_{seed["pack_version"]}.mrpack"))
 
     shutil.rmtree(os.path.join(os.getcwd(), ".tmp"))
 
-    print(f"\n\033[92mModrinth pack file written to\033[0m {template["pack_name"]}_{template["pack_version"]}.mrpack\n")
-    template_file.close()
+    print(f"\n[green]Modrinth pack file written to[/] {seed["pack_name"]}_{seed["pack_version"]}.mrpack\n")
+    seed_file.close()
     modrinth_index_file.close()
 
-elif args.create_template:
-    modlist_file = open(args.create_template, "r") 
+elif args.create_seed:
+    modlist_file = open(args.create_seed, "r") 
     modlist = json.load(modlist_file)
 
     print()
-    pack_name = modlist_file.name.split("/")[-1] if args.noconfirm else input("\033[96mEnter pack name\033[0m: ")
-    pack_version = "1.0.0" if args.noconfirm else input("\033[96mEnter pack version\033[0m: ")
-    loader = "fabric" if args.noconfirm else input("\033[96mEnter mod loader\033[0m: ")
-    game_version = "1.21.10" if args.noconfirm else input("\033[96mEnter target game version\033[0m: ")
+    pack_name = modlist_file.name.split("/")[-1] if args.noconfirm else input("[cyan]Enter pack name[/]: ")
+    pack_version = "1.0.0" if args.noconfirm else input("[cyan]Enter pack version[/]: ")
+    loader = "fabric" if args.noconfirm else input("[cyan]Enter mod loader[/]: ")
+    game_version = "1.21.10" if args.noconfirm else input("[cyan]Enter target game version[/]: ")
 
     if args.noconfirm:
-        print("\033[31mWARNING\033[0m: -y used, please change metadata in index.json before continuing.")
+        print("[red]WARNING[/]: -y used, please change metadata in index.json before continuing.")
 
     mods = []
     for mod in modlist:
@@ -158,8 +173,8 @@ elif args.create_template:
         "template_format": ["modrinth", 1]
     }
 
-    os.mkdir(os.path.join(os.getcwd(), "template"))
-    index_file = open(os.path.join(os.getcwd(), "template", "index.json"), "w")
+    os.mkdir(os.path.join(os.getcwd(), "seed"))
+    index_file = open(os.path.join(os.getcwd(), "seed", "index.json"), "w")
     index_file.write(json.dumps(index))
 
 else:
