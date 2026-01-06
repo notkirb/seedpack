@@ -13,19 +13,19 @@ Seedpack is a modpack management utility for modpack developers to quickly updat
 To grow a modpack:
 
 ```bash
-$ python3 seedpack.py -t my-cool-modpack
+$ python3 seedpack.py -t ~/my-cool-modpack
 ```
 
 To grow a modpack with a specific game version:
 
 ```bash
-$ python3 seedpack.py -t my-cool-modpack -g 1.21.11
+$ python3 seedpack.py -t ~/my-cool-modpack -g 1.21.11
 ```
 
 To plant a seed with a modlist.json from Prism Launcher:
 
 ```bash
-$ python3 seedpack.py -c modlist.json
+$ python3 seedpack.py -c ~/path/to/modlist.json
 ```
 
 To see a list of additional commands: 
