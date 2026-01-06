@@ -13,7 +13,6 @@ Seedpack is a modpack management utility for modpack developers to quickly updat
 To grow a modpack:
 
 ```bash
-# seed: the folder where the seed is
 $ python3 seedpack.py -t ~/my-cool-modpack
 ```
 
