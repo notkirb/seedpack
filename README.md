@@ -13,19 +13,19 @@ Seedpack is a modpack management utility for modpack developers to quickly updat
 To grow a modpack:
 
 ```bash
-$ python3 seedpack.py -t ~/my-cool-modpack
+$ python3 seedpack.py -t my-cool-modpack
+```
+
+To grow a modpack with a specific game version:
+
+```bash
+$ python3 seedpack.py -t my-cool-modpack -g 1.21.11
 ```
 
 To plant a seed with a modlist.json from Prism Launcher:
 
 ```bash
 $ python3 seedpack.py -c modlist.json
-```
-
-To grow a modpack with a specific game version:
-
-```bash
-$ python3 seedpack.py -t ~/my-cool-modpack -g 1.21.11
 ```
 
 To see a list of additional commands: 
@@ -71,3 +71,63 @@ The following is an example for an index.json:
     ]
 }
 ```
+
+## Create a seed
+You can start with a blank slate and add mods manually, or you can start with an existing modpack. 
+
+### From an existing modpack
+If you want to start with an existing modpack, you will need Prism Launcher to export a modlist in JSON format with URLs. Here is an example of what you should have:
+
+```json
+[
+    {
+        "name": "AppleSkin",
+        "url": "https://modrinth.com/mod/EsAfCjCV"
+    },
+    {
+        "name": "Architectury",
+        "url": "https://modrinth.com/mod/lhGA9TYQ"
+    }
+]
+```
+
+You can get this by following this process:
+- select your modpack
+- press edit
+- press Mods tab
+- press Export modlist
+- change format to JSON
+- toggle URL
+- make sure the format is correct in the Result pane
+- press Save and choose a location
+
+Note that only mods that have been downloaded from Modrinth will be added to the modpack. 
+
+Once you have your modlist.json, run:
+
+```bash
+$ python3 seedpack.py -c ~/path/to/modlist.json
+```
+
+The resulting seed will be generated in your working directory with metadata you enter. You can also run:
+
+```bash
+$ python3 seedpack.py -c ~/path/to/modlist.json -y
+```
+
+To generate with default metadata to change later.
+
+### From scratch
+If you want to start with a blank slate to add mods onto manually, you can run:
+
+```bash
+$ python3 seedpack.py -c
+```
+
+This will generate a seed in your working directory with metadata you enter. You can also run:
+
+```bash
+$ python3 seedpack.py -c -y
+```
+
+To generate with default metadata to change later.
