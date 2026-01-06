@@ -13,7 +13,7 @@ def get_latest_fabric_loader(version : str):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--seed", help="Path of seed folder")
-parser.add_argument("-c", "--create-seed", help="Path of modlist.json")
+parser.add_argument("-c", "--create-seed", help="Path of modlist.json", nargs="?" , const=True, default=None)
 
 parser.add_argument("-g", "--game-version", help="Override game version")
 parser.add_argument("-v", "--verbose", help="Increate print verbosity", action="store_true")
@@ -144,24 +144,33 @@ if args.seed:
     seed_file.close()
     modrinth_index_file.close()
 
-elif args.create_seed:
-    modlist_file = open(args.create_seed, "r") 
-    modlist = json.load(modlist_file)
+elif args.create_seed is not None:
 
-    print()
-    pack_name = modlist_file.name.split("/")[-1] if args.noconfirm else input("[cyan]Enter pack name[/]: ")
-    pack_version = "1.0.0" if args.noconfirm else input("[cyan]Enter pack version[/]: ")
-    loader = "fabric" if args.noconfirm else input("[cyan]Enter mod loader[/]: ")
-    game_version = "1.21.10" if args.noconfirm else input("[cyan]Enter target game version[/]: ")
+    if args.noconfirm:
+        print()
+        pack_name = "my-modpack"
+        pack_version = "1.0.0"
+        loader = "fabric"
+        game_version = "1.21.10"
+    else:
+        pack_name = input("[cyan]Enter pack name[/]: ")
+        pack_version = input("[cyan]Enter pack version[/]: ")
+        loader = input("[cyan]Enter mod loader[/]: ")
+        game_version = input("[cyan]Enter target game version[/]: ")
 
     if args.noconfirm:
         print("[red]WARNING[/]: -y used, please change metadata in index.json before continuing.")
 
-    mods = []
-    for mod in modlist:
-        mod_id = mod["url"].split("/")[-1]
-        if len(mod_id) == 8:
-            mods.append(mod_id)
+    if args.create_seed is True:
+        mods = []
+    else:
+        modlist_file = open(args.create_seed, "r") 
+        modlist = json.load(modlist_file)
+        mods = []
+        for mod in modlist:
+            mod_id = mod["url"].split("/")[-1]
+            if len(mod_id) == 8:
+                mods.append(mod_id)
 
     index = {
         "game": "minecraft",
