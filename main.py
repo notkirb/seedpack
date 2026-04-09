@@ -135,6 +135,8 @@ if args.seed:
     if os.path.exists(os.path.join(args.seed, "overrides")):
         shutil.copytree(os.path.join(args.seed, "overrides"), os.path.join(os.getcwd(), ".tmp", "overrides"))
 
+    modrinth_index_file.close()
+
     shutil.make_archive("tmp.mrpack", "zip", os.path.join(os.getcwd(), ".tmp"))
     shutil.move(os.path.join(os.getcwd(), "tmp.mrpack.zip"), os.path.join(os.getcwd(), f"{seed["pack_name"]}_{seed["pack_version"]}_{seed["target_game_version"]}.mrpack"))
 
@@ -142,7 +144,6 @@ if args.seed:
 
     print(f"\n[green]Modrinth pack file written to[/] {seed["pack_name"]}_{seed["pack_version"]}.mrpack\n")
     seed_file.close()
-    modrinth_index_file.close()
 
 elif args.create_seed is not None:
 
